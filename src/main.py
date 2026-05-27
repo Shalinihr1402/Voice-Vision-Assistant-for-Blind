@@ -25,7 +25,7 @@ from .config import get_config
 logger = logging.getLogger("ally-vision-agent")
 
 # Constants
-VISION_SYSTEM_PROMPT = "You are Ally, a vision assistant for blind users. Provide extremely concise and clear descriptions. Focus only on the most important elements needed to answer the user's specific question. Ignore changes in color, brightness, or shading caused by sunglasses. Be direct and to the point. Answer as if the scene is fully visible without distortion. Avoid phrases like \"as seen\" or \"looks like,\" and do not describe things based only on visual appearance. When helpful, explain how a screen reader might announce elements. Tailor your response to what a blind user would truly want to know."
+VISION_SYSTEM_PROMPT = "You are Shals, a vision assistant for blind users. Provide extremely concise and clear descriptions. Focus only on the most important elements needed to answer the user's specific question. Ignore changes in color, brightness, or shading caused by sunglasses. Be direct and to the point. Answer as if the scene is fully visible without distortion. Avoid phrases like \"as seen\" or \"looks like,\" and do not describe things based only on visual appearance. When helpful, explain how a screen reader might announce elements. Tailor your response to what a blind user would truly want to know. For walking or travel situations, focus first on safety and navigation: what is directly ahead, what is on the left or right, whether the path seems clear or blocked, and any nearby people, vehicles, doors, stairs, roads, traffic lights, or obstacles. Use simple short guidance such as 'person ahead', 'vehicle on the right', or 'path partly blocked'. Do not give risky final instructions like 'cross now' or 'go now'; instead advise the user to confirm carefully when safety is uncertain."
 
 @dataclass
 class UserData:
@@ -104,8 +104,16 @@ class AllyVisionAgent(Agent):
                 punctuate=True,
                 language="en-US"
             ),
-            llm=openai.LLM(model="gpt-4o", parallel_tool_calls=False),
-            tts=elevenlabs.TTS(model="eleven_multilingual_v2")
+            llm=openai.LLM(
+            model="llama-3.3-70b-versatile",
+            base_url="https://api.groq.com/openai/v1",
+            api_key=get_config().get("GROQ_API_KEY"),
+            parallel_tool_calls=False
+            ),
+            tts=elevenlabs.TTS(
+                model="eleven_multilingual_v2",
+                voice_id="EXAVITQu4vr4xnSDxMaL"
+            )
         )
     
     async def on_enter(self) -> None:
@@ -259,7 +267,11 @@ class AllyVisionAgent(Agent):
             )
             
             # Initialize LLM and start analysis
-            analysis_llm = openai.LLM(model="gpt-4o")
+            analysis_llm = openai.LLM(
+            model="llama-3.3-70b-versatile",
+            base_url="https://api.groq.com/openai/v1",
+            api_key=get_config().get("GROQ_API_KEY")
+            )
             asyncio.create_task(self._run_gpt_analysis(userdata, analysis_llm, visual_ctx))
             
             # Try Groq if available - simplified check
@@ -528,7 +540,10 @@ async def entrypoint(ctx: JobContext):
             userdata=userdata,
             stt=deepgram.STT(model="nova-2-general", smart_format=True, punctuate=True, language="en-US"),
             llm=openai.LLM(model="gpt-4o", parallel_tool_calls=False),
-            tts=elevenlabs.TTS(model="eleven_multilingual_v2"),
+            tts=elevenlabs.TTS(
+                model="eleven_multilingual_v2",
+                voice_id="EXAVITQu4vr4xnSDxMaL"
+),
             vad=silero.VAD.load(),
             max_tool_steps=3,
         )
