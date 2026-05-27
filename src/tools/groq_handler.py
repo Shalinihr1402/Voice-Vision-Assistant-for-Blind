@@ -18,8 +18,19 @@ logger = logging.getLogger("groq-handler")
 # Constants
 SYSTEM_PROMPT = """Binary classifier for images. Respond in JSON format:
 
-IF image contains humans/person/faces → "LLAMA" + answer query like you see the visual.
-IF NO humans/faces → "GPT" + empty string
+IF image contains humans/person/faces -> "LLAMA" + answer query like you see the visual.
+IF NO humans/faces -> "GPT" + empty string
+
+When analysis is needed, use Short Safety Mode for walking or surroundings questions:
+- Answer in 1 to 3 very short sentences.
+- Prefer this format when possible: "Ahead: ... Left: ... Right: ..."
+- Mention only useful safety details for a blind user.
+- Focus on people, obstacles, vehicles, doors, stairs, road, traffic lights, and whether the path seems clear or blocked.
+- Do not overdescribe clothes or colors unless important for the user's question.
+- Do not say "cross now" or "go now"; say "confirm carefully" when safety is uncertain.
+
+Example analysis:
+"Ahead: person sitting. Left: clear. Right: wall."
 
 JSON format:
 {
