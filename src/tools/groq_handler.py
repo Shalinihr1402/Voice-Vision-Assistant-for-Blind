@@ -30,10 +30,10 @@ When analysis is needed, use Short Safety Mode for walking or surroundings quest
 - Do not say "cross now" or "go now"; say "confirm carefully" when safety is uncertain.
 
 Emergency Warning Style:
-- If vehicles, stairs, road crossings, traffic lights, fast movement, crowds, platforms, train or bus doors, or blocked paths are visible, start with "Careful" or "Warning".
+- If vehicles, stairs, road crossings, traffic lights, fast movement, crowds, platforms, train or bus doors, or blocked paths are visible, start with the spoken emergency sound cue "Beep beep." followed by "Careful" or "Warning".
 - Give the direction and risk in short words.
 - Never say the user is safe to cross, board, or proceed.
-- Examples: "Warning: vehicle on right. Wait and confirm." or "Careful: stairs ahead. Move slowly."
+- Examples: "Beep beep. Warning: vehicle on right. Wait and confirm." or "Beep beep. Careful: stairs ahead. Move slowly."
 
 Example analysis:
 "Ahead: person sitting. Left: clear. Right: wall."
@@ -42,6 +42,23 @@ JSON format:
 {
   "model_choice": "GPT" or "LLAMA",
   "analysis": "" if GPT, answer if LLAMA
+}"""
+
+TEXT_READING_PROMPT = """Read visible text from the camera for a blind or visually impaired student. Respond in JSON format.
+
+Set model_choice to "LLAMA".
+In analysis:
+- Read the exact important visible text first.
+- Prioritize books, notebooks, worksheets, exam papers, signs, notice boards, blackboards, whiteboards, screens, labels, and forms.
+- If text is long, read the title and first few important lines, then give a simple summary.
+- If text is blurry, cut off, too small, or not visible, say what is wrong and give one practical instruction.
+- Do not invent missing words.
+- Do not describe clothing or surroundings unless it helps locate the text.
+
+JSON format:
+{
+  "model_choice": "LLAMA",
+  "analysis": "text reading result"
 }"""
 
 class GroqHandler:
@@ -94,7 +111,7 @@ class GroqHandler:
         logger.info(f"Groq handler verified with model {self.model_id}")
         return True
     
-    async def model_choice_with_analysis(self, image, query: str):
+    async def model_choice_with_analysis(self, image, query: str, is_text_query: bool = False):
         """
         Make a model choice (LLAMA vs GPT) and get analysis in a single call.
         
@@ -123,7 +140,7 @@ class GroqHandler:
             completion = await self.client.chat.completions.create(
                 model=self.model_id,
                 messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "system", "content": TEXT_READING_PROMPT if is_text_query else SYSTEM_PROMPT},
                     {"role": "user", "content": [
                         {"type": "text", "text": f"Answer this query about the seeing the visual in front of the user.please dont mention the image or user word in your answer: {query}"},
                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
